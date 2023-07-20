@@ -11,26 +11,6 @@ const server = net.createServer(function (socket) {
   console.log(`Cliente ${clientId} conectado.`);
 
   socket.on('data', function (data) {
-    const operacao = data.toString().trim(); // Recebe a operação enviada pelo cliente
-
-    switch (operacao) {
-      case '1':
-        socket.write('Você enviou resposta 1 para o servidor'); // Envia uma resposta para o cliente
-        break;
-
-      case '2':
-        socket.write('Você enviou resposta 2 para o servidor'); // Envia uma resposta para o cliente
-        break;
-
-      case '3':
-        socket.write('Você enviou resposta 3 para o servidor'); // Envia uma resposta para o cliente
-        break;
-
-      default:
-        socket.write('Operação inválida.'); // Envia uma resposta para o cliente
-        break;
-    }
-
     console.log(`Resposta enviada do cliente ${clientId}: ` + data.toString().trim());
   });
 
