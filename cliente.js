@@ -33,6 +33,7 @@ client.connect(serverPort, serverIP, function () {
   });
 });
 
+
 client.on('error', function (err) {
   console.log('Não foi possível conectar ao servidor. Os cálculos serão realizados localmente.');
 
@@ -41,17 +42,12 @@ client.on('error', function (err) {
   console.log('2 - Área de um círculo');
   console.log('3 - O poder do seu soco no espaço, na velocidade da luz');
   
-  rl.removeAllListeners('line');
 
-  const rlLocal = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-  });
-  rlLocal.on('line', function (operacao) {
+  rl.on('line', function (operacao) {
     switch (operacao) {
       case '1':
-        rlLocal.question('Qual o comprimento da casa? ', function (comprimentoCasa) {
-          rlLocal.question('Qual a largura da casa? ', function (larguraCasa) {
+        rl.question('Qual o comprimento da casa? ', function (comprimentoCasa) {
+          rl.question('Qual a largura da casa? ', function (larguraCasa) {
             const areaCasa = comprimentoCasa * larguraCasa;
             console.log(`A área da casa é: ${areaCasa}`);
           });
@@ -59,14 +55,14 @@ client.on('error', function (err) {
         break;
 
       case '2':
-        rlLocal.question('Qual o raio do círculo? ', function (raioCirculo) {
+        rl.question('Qual o raio do círculo? ', function (raioCirculo) {
           const areaCirculo = Math.PI * raioCirculo * raioCirculo;
           console.log(`A área do círculo é: ${areaCirculo}`);
         });
         break;
 
       case '3':
-        rlLocal.question('Qual a massa do seu soco? ', function (massaSoco) {
+        rl.question('Qual a massa do seu soco? ', function (massaSoco) {
           const poderSoco = massaSoco * Math.pow(299792458, 2);
           console.log(`Seu soco teria o poder de ${poderSoco} joules, poderia causar uma catástrofe!`);
         });
