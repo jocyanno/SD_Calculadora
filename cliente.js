@@ -1,15 +1,15 @@
 const net = require('net');
 const readline = require('readline');
 
-const serverIP = '127.0.0.1'; // IP do servidor
-const serverPort = 8070; // Porta de comunicação
+const serverIP = '127.0.0.1'; 
+const serverPort = 8070;
 
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout
 });
 
-const client = new net.Socket(); // Cria uma instância do objeto Socket
+const client = new net.Socket();
 
 client.connect(serverPort, serverIP, function () {
   console.log('Conectado ao servidor.');
@@ -20,7 +20,26 @@ client.connect(serverPort, serverIP, function () {
   console.log('3 - O poder do seu soco no espaço, na velocidade da luz');
 
   rl.on('line', function (operacao) {
-    client.write(operacao); // Envia a operação para o servidor
+    client.write(operacao);
+  });
+
+  client.on('data', function (data) {
+    console.log('Valor recebido pelo servidor:', data.toString().trim());
+  });
+
+  client.on('close', function () {
+    console.log('Conexão fechada.');
+    process.exit(0); // Encerra o cliente caso a conexão seja fechada.
+  });
+});
+
+client.on('error', function (err) {
+  console.log('Não foi possível conectar ao servidor. Os cálculos serão realizados localmente.');
+  console.log('Escolha uma operação:');
+  console.log('1 - Área de uma casa');
+  console.log('2 - Área de um círculo');
+  console.log('3 - O poder do seu soco no espaço, na velocidade da luz');
+  rl.on('line', function (operacao) {
 
     switch (operacao) {
       case '1':
@@ -51,12 +70,4 @@ client.connect(serverPort, serverIP, function () {
         break;
     }
   });
-});
-
-client.on('close', function () {
-  console.log('Conexão fechada.');
-});
-
-rl.on('close', function () {
-  client.end(); // Encerra a conexão com o servidor ao fechar o terminal
 });
