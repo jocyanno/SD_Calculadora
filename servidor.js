@@ -38,6 +38,9 @@ const processRequest = (socket, clientId, data) => {
             client.currentState = ClientState.AWAITING_MASS;
             socket.write("Qual a massa do seu soco?\n");
             break;
+          case '4':
+            console.log(`Cliente escolheu ${clientId} estar desconectado.`);
+            socket.destroy();
           default:
             socket.write('Operação inválida!\n');
             break;
@@ -83,7 +86,7 @@ const processRequest = (socket, clientId, data) => {
         break;
     }
   } catch (err) {
-    console.error(`Erro ao processar a solicitação do cliente ${clientId}:`, err);
+    console.error(`Erro ao processar a solicitação d4o cliente ${clientId}:`, err);
   }
 };
 

@@ -9,11 +9,19 @@ const rl = readline.createInterface({
   output: process.stdout
 });
 
-function displayOperations() {
+function displayOperationsOnline() {
   console.log('Escolha uma operação:');
   console.log('1 - Área de uma casa');
   console.log('2 - Área de um círculo');
   console.log('3 - O poder do seu soco no espaço, na velocidade da luz');
+  console.log('4 - Desconectar');
+}
+function displayOperationsOffline() {
+  console.log('Escolha uma operação:');
+  console.log('1 - Área de uma casa');
+  console.log('2 - Área de um círculo');
+  console.log('3 - O poder do seu soco no espaço, na velocidade da luz');
+  console.log('4 - Reconectar');
 }
 
 function performLocalCalculation(operacao) {
@@ -40,7 +48,11 @@ function performLocalCalculation(operacao) {
         console.log(`Seu soco teria o poder de ${poderSoco} joules, poderia causar uma catástrofe!`);
       });
       break;
-
+      case '4':
+        client.connect(serverPort, serverIP, function(){
+          displayOperationsOnline()
+        })
+       break;
     default:
       console.log('Operação inválida!');
       break;
@@ -51,7 +63,7 @@ const client = new net.Socket();
 
 client.connect(serverPort, serverIP, function () {
   console.log('Conectado ao servidor.');
-  displayOperations();
+  displayOperationsOnline();
 
   rl.on('line', function (operacao) {
     client.write(operacao);
@@ -64,7 +76,7 @@ client.connect(serverPort, serverIP, function () {
   client.on('close', function () {
     if(!client.errored){
       console.log("Caiu a conexão com o servidor!")
-      displayOperations();
+      displayOperationsOffline();
   
       rl.on('line', function (operacao) {
         performLocalCalculation(operacao);
@@ -75,7 +87,7 @@ client.connect(serverPort, serverIP, function () {
 
 client.on('error', function (err) {
   console.log(`Deu erro no cliente ${err}`);
-  displayOperations();
+  displayOperationsOffline();
 
   rl.on('line', function (operacao) {
     performLocalCalculation(operacao);
