@@ -77,7 +77,7 @@ client.connect(serverPort, serverIP, function () {
     if(!client.errored){
       console.log("Caiu a conexão com o servidor!")
       displayOperationsOffline();
-  
+      rl.removeAllListeners('line');
       rl.on('line', function (operacao) {
         performLocalCalculation(operacao);
       });
