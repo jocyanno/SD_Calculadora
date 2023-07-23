@@ -1,9 +1,8 @@
-const dgram = require('dgram');
+const net = require('net');
 const readline = require('readline');
 
-const multicastAddress = '239.255.255.250';
+const serverIP = '127.0.0.1'; 
 const serverPort = 8070;
-const localAddress = '127.0.0.1'; // Change this to your local IP address if needed
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -17,7 +16,6 @@ function displayOperationsOnline() {
   console.log('3 - O poder do seu soco no espaço, na velocidade da luz');
   console.log('4 - Desconectar');
 }
-
 function displayOperationsOffline() {
   console.log('Escolha uma operação:');
   console.log('1 - Área de uma casa');
@@ -50,42 +48,48 @@ function performLocalCalculation(operacao) {
         console.log(`Seu soco teria o poder de ${poderSoco} joules, poderia causar uma catástrofe!`);
       });
       break;
-    case '4':
-      client.addMembership(multicastAddress, localAddress); 
-      displayOperationsOnline();
-      break;
+      case '4':
+        client.connect(serverPort, serverIP, function(){
+          displayOperationsOnline()
+        })
+       break;
     default:
       console.log('Operação inválida!');
       break;
   }
 }
 
-const client = dgram.createSocket({ type: 'udp4', reuseAddr: true });
+const client = new net.Socket();
 
-client.on('listening', () => {
-  client.setBroadcast(true);
-});
-
-client.on('message', (data, remote) => {
-  console.log('Resposta do servidor:', data.toString().trim());
-});
-
-client.on('error', (err) => {
-  console.log(`Deu erro no cliente ${err}`);
-  displayOperationsOffline();
-});
-
-client.bind(serverPort, localAddress, () => {
+client.connect(serverPort, serverIP, function () {
   console.log('Conectado ao servidor.');
   displayOperationsOnline();
 
   rl.on('line', function (operacao) {
-    if (operacao === '4') {
-      client.dropMembership(multicastAddress, localAddress);
-      client.send(operacao, serverPort, serverIP);
-    } else {
-      client.send(operacao, serverPort, multicastAddress);
-      console.log(`Resposta enviada: ${serverPort} ${operacao} ${multicastAddress}`)
+    client.write(operacao);
+  });
+
+  client.on('data', function (data) {
+    console.log('Resposta do servidor:', data.toString().trim());
+  });
+
+  client.on('close', function () {
+    if(!client.errored){
+      console.log("Caiu a conexão com o servidor!")
+      displayOperationsOffline();
+          rl.removeAllListeners('line');
+      rl.on('line', function (operacao) {
+        performLocalCalculation(operacao);
+      });
     }
+  });
+});
+
+client.on('error', function (err) {
+  console.log(`Deu erro no cliente ${err}`);
+  displayOperationsOffline();
+
+  rl.on('line', function (operacao) {
+    performLocalCalculation(operacao);
   });
 });
