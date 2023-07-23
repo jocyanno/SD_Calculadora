@@ -109,6 +109,13 @@ const server = net.createServer(function (socket) {
       clients.splice(index, 1);
     }
   });
+
+  //Quando um cliente está inativo por muito tempo o servidor vai desconecta-lo para poupar recursos
+  socket.setTimeout(0.1 * 60 * 1000, () => {
+    console.log(`Cliente ${clientId} desconectado devido a inatividade.`);
+    socket.destroy()
+  });
+  
 });
 
 server.listen(serverPort, function () {
