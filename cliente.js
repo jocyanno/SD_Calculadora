@@ -62,15 +62,22 @@ client.connect(serverPort, serverIP, function () {
   });
 
   client.on('close', function () {
-    console.log("Caiu a conexão com o servidor!")
-    displayOperations();
-
-  rl.on('line', function (operacao) {
-    performLocalCalculation(operacao);
-  });// Encerra o cliente caso a conexão seja fechada.
+    if(!client.errored){
+      console.log("Caiu a conexão com o servidor!")
+      displayOperations();
+  
+      rl.on('line', function (operacao) {
+        performLocalCalculation(operacao);
+      });
+    }
   });
 });
 
 client.on('error', function (err) {
   console.log(`Deu erro no cliente ${err}`);
+  displayOperations();
+
+  rl.on('line', function (operacao) {
+    performLocalCalculation(operacao);
+  });
 });

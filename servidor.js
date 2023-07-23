@@ -111,7 +111,7 @@ const server = net.createServer(function (socket) {
   });
 
   //Quando um cliente está inativo por muito tempo o servidor vai desconecta-lo para poupar recursos
-  socket.setTimeout(0.1 * 60 * 1000, () => {
+  socket.setTimeout(0.5 * 60 * 1000, () => {
     console.log(`Cliente ${clientId} desconectado devido a inatividade.`);
     socket.destroy()
   });
