@@ -1,7 +1,12 @@
 const net = require('net');
+const dgram = require('dgram');
 const serverPort = 8070;
 let nextClientId = 1;
 const clients = [];
+
+// Endereço IP e porta para o grupo multicast
+const MULTICAST_ADDRESS = '239.255.255.250';
+const PORT = 8070;
 
 // Estados possíveis do cliente
 const ClientState = {
@@ -10,6 +15,22 @@ const ClientState = {
   AWAITING_WIDTH: 'AWAITING_WIDTH', // O cliente está aguardando o envio da largura da casa
   AWAITING_RADIUS: 'AWAITING_RADIUS', // O cliente está aguardando o envio do raio do círculo
   AWAITING_MASS: 'AWAITING_MASS', // O cliente está aguardando o envio da massa do soco
+};
+
+
+const sendMulticastMessage = (message) => {
+  const socket = dgram.createSocket('udp4');
+  const messageBuffer = Buffer.from(message);
+
+  socket.bind(8070, MULTICAST_ADDRESS,() => {
+    socket.setBroadcast(true);
+    socket.send(messageBuffer, 0, messageBuffer.length, PORT, MULTICAST_ADDRESS, (err) => {
+      if (err) {
+        console.error('Erro ao enviar mensagem multicast:', err);
+      }
+      socket.close();
+    });
+  });
 };
 
 const processRequest = (socket, clientId, data) => {
@@ -28,21 +49,22 @@ const processRequest = (socket, clientId, data) => {
         switch (operacao) {
           case '1':
             client.currentState = ClientState.AWAITING_LENGTH;
-            socket.write("Qual o comprimento da casa?\n");
+            sendMulticastMessage("Qual o comprimento da casa?");
             break;
           case '2':
             client.currentState = ClientState.AWAITING_RADIUS;
-            socket.write("Qual o raio do círculo?\n");
+            sendMulticastMessage("Qual o raio do círculo?");
             break;
           case '3':
             client.currentState = ClientState.AWAITING_MASS;
-            socket.write("Qual a massa do seu soco?\n");
+            sendMulticastMessage("Qual a massa do seu soco?");
             break;
           case '4':
             console.log(`Cliente escolheu ${clientId} estar desconectado.`);
             socket.destroy();
+            break;
           default:
-            socket.write('Operação inválida!\n');
+            sendMulticastMessage('Operação inválida!');
             break;
         }
         break;
@@ -51,7 +73,7 @@ const processRequest = (socket, clientId, data) => {
         // O cliente enviou o comprimento da casa, agora aguardamos a largura
         client.comprimentoCasa = parseFloat(data);
         client.currentState = ClientState.AWAITING_WIDTH;
-        socket.write("Qual a largura da casa?\n");
+        sendMulticastMessage("Qual a largura da casa?");
         break;
 
       case ClientState.AWAITING_WIDTH:
@@ -59,7 +81,7 @@ const processRequest = (socket, clientId, data) => {
         const larguraCasa = parseFloat(data);
         const areaCasa = client.comprimentoCasa * larguraCasa;
         console.log(`Cliente ${clientId} enviou comprimento: ${client.comprimentoCasa}, largura: ${larguraCasa}`);
-        socket.write(`A área da casa é: ${areaCasa}\n`);
+        sendMulticastMessage(`A área da casa é: ${areaCasa}`);
         client.currentState = ClientState.IDLE;
         break;
 
@@ -68,7 +90,7 @@ const processRequest = (socket, clientId, data) => {
         const raioCirculo = parseFloat(data);
         const areaCirculo = Math.PI * raioCirculo * raioCirculo;
         console.log(`Cliente ${clientId} enviou raio do círculo: ${raioCirculo}`);
-        socket.write(`A área do círculo é: ${areaCirculo}\n`);
+        sendMulticastMessage(`A área do círculo é: ${areaCirculo}`);
         client.currentState = ClientState.IDLE;
         break;
 
@@ -77,16 +99,16 @@ const processRequest = (socket, clientId, data) => {
         const massaSoco = parseFloat(data);
         const poderSoco = massaSoco * Math.pow(299792458, 2);
         console.log(`Cliente ${clientId} enviou massa do soco: ${massaSoco}`);
-        socket.write(`Seu soco teria o poder de ${poderSoco} joules, poderia causar uma catástrofe!\n`);
+        sendMulticastMessage(`Seu soco teria o poder de ${poderSoco} joules, poderia causar uma catástrofe!`);
         client.currentState = ClientState.IDLE;
         break;
 
       default:
-        socket.write('Operação inválida!\n');
+        sendMulticastMessage('Operação inválida!');
         break;
     }
   } catch (err) {
-    console.error(`Erro ao processar a solicitação d4o cliente ${clientId}:`, err);
+    console.error(`Erro ao processar a solicitação do cliente ${clientId}:`, err);
   }
 };
 
@@ -122,5 +144,5 @@ const server = net.createServer(function (socket) {
 });
 
 server.listen(serverPort, function () {
-  console.log(`Servidor escutando na porta ${serverPort}`);
+  console.log(`Servidor escutando na porta ${PORT}`);
 });
