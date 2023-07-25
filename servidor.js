@@ -102,8 +102,8 @@
     const clientId = remote.address + ':' + remote.port;
   
     console.log(`Requisição recebida do cliente ${clientId}: ${data}`);
-    if (data !== "Ola") { // Check if the data is not "Ola" before processing the request
-      processRequest(data, remote); // Fix the arguments here
+    if (data !== "Ola") { 
+      processRequest(data, remote); 
     }
   });
 
