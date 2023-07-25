@@ -1,7 +1,7 @@
 const dgram = require('dgram');
 const readline = require('readline');
 
-const serverIP = '127.0.0.1';
+const multicastAddress = '239.255.1.100'; // Endereço de multicast para comunicação
 const serverPort = 8070;
 
 const rl = readline.createInterface({
@@ -52,35 +52,35 @@ function performLocalCalculation(operacao) {
   }
 }
 
-const client = dgram.createSocket('udp4');
+const client = dgram.createSocket({ type: 'udp4', reuseAddr: true });
 
-client.on('message', function (msg) {
-  console.log('Resposta do servidor:', msg.toString().trim());
-});
-
-client.on('close', function () {
-  console.log("Caiu a conexão com o servidor!")
+client.on('listening', () => {
+  client.addMembership(multicastAddress);
+  client.setMulticastTTL(128); // Configura o TTL para alcance da rede
+  console.log('Cliente aguardando respostas do servidor em multicast.');
   displayOperationsOffline();
-  rl.removeAllListeners('line');
-  rl.on('line', function (operacao) {
-    performLocalCalculation(operacao);
-  });
 });
 
-client.on('error', function (err) {
-  console.log(`Deu erro no cliente ${err}`);
+client.on('message', (message, remote) => {
+  console.log('Resposta do servidor:', message.toString().trim());
+});
+
+client.on('error', (err) => {
+  console.log('Deu erro no cliente:', err);
   displayOperationsOffline();
-
-  rl.on('line', function (operacao) {
-    performLocalCalculation(operacao);
-  });
 });
 
-client.connect(serverPort, serverIP, function () {
-  console.log('Conectado ao servidor.');
-  displayOperationsOnline();
+// Envia uma mensagem multicast para que o servidor identifique o cliente
+client.send('Ola', serverPort, multicastAddress, (err) => {
+  if (err) {
+    console.log('Erro ao enviar mensagem multicast:', err);
+  }
+});
 
-  rl.on('line', function (operacao) {
-    client.send(operacao, serverPort, serverIP);
+rl.on('line', function (operacao) {
+  client.send(operacao, serverPort, multicastAddress, (err) => {
+    if (err) {
+      console.log('Erro ao enviar mensagem multicast:', err);
+    }
   });
 });
