@@ -1,7 +1,7 @@
-const net = require('net');
+const dgram = require('dgram');
 const readline = require('readline');
 
-const serverIP = '127.0.0.1'; 
+const serverIP = '127.0.0.1';
 const serverPort = 8070;
 
 const rl = readline.createInterface({
@@ -14,14 +14,12 @@ function displayOperationsOnline() {
   console.log('1 - Área de uma casa');
   console.log('2 - Área de um círculo');
   console.log('3 - O poder do seu soco no espaço, na velocidade da luz');
-  console.log('4 - Desconectar');
 }
 function displayOperationsOffline() {
   console.log('Escolha uma operação:');
   console.log('1 - Área de uma casa');
   console.log('2 - Área de um círculo');
   console.log('3 - O poder do seu soco no espaço, na velocidade da luz');
-  console.log('4 - Reconectar');
 }
 
 function performLocalCalculation(operacao) {
@@ -48,40 +46,24 @@ function performLocalCalculation(operacao) {
         console.log(`Seu soco teria o poder de ${poderSoco} joules, poderia causar uma catástrofe!`);
       });
       break;
-      case '4':
-        client.connect(serverPort, serverIP, function(){
-          displayOperationsOnline()
-        })
-       break;
     default:
       console.log('Operação inválida!');
       break;
   }
 }
 
-const client = new net.Socket();
+const client = dgram.createSocket('udp4');
 
-client.connect(serverPort, serverIP, function () {
-  console.log('Conectado ao servidor.');
-  displayOperationsOnline();
+client.on('message', function (msg) {
+  console.log('Resposta do servidor:', msg.toString().trim());
+});
 
+client.on('close', function () {
+  console.log("Caiu a conexão com o servidor!")
+  displayOperationsOffline();
+  rl.removeAllListeners('line');
   rl.on('line', function (operacao) {
-    client.write(operacao);
-  });
-
-  client.on('data', function (data) {
-    console.log('Resposta do servidor:', data.toString().trim());
-  });
-
-  client.on('close', function () {
-    if(!client.errored){
-      console.log("Caiu a conexão com o servidor!")
-      displayOperationsOffline();
-          rl.removeAllListeners('line');
-      rl.on('line', function (operacao) {
-        performLocalCalculation(operacao);
-      });
-    }
+    performLocalCalculation(operacao);
   });
 });
 
@@ -91,5 +73,14 @@ client.on('error', function (err) {
 
   rl.on('line', function (operacao) {
     performLocalCalculation(operacao);
+  });
+});
+
+client.connect(serverPort, serverIP, function () {
+  console.log('Conectado ao servidor.');
+  displayOperationsOnline();
+
+  rl.on('line', function (operacao) {
+    client.send(operacao, serverPort, serverIP);
   });
 });
