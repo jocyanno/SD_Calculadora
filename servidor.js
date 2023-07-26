@@ -1,5 +1,5 @@
   const dgram = require('dgram');
-  const serverPort = 8070;
+  const serverPort = 8080;
   const clients = [];
 
   const multicastAddress = '239.255.1.100'; // Endereço de multicast para comunicação
@@ -82,7 +82,7 @@
           break;
 
         default:
-          server.send('Operação inválida!', rinfo.port, rinfo.address);
+          server.send('Estado inválido!', rinfo.port, rinfo.address);
           break;
       }
     } catch (err) {
@@ -102,9 +102,9 @@
     const clientId = remote.address + ':' + remote.port;
   
     console.log(`Requisição recebida do cliente ${clientId}: ${data}`);
-    if (data !== "Ola") { 
+
       processRequest(data, remote); 
-    }
+
   });
 
   server.on('error', (err) => {
