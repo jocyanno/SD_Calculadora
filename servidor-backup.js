@@ -1,5 +1,5 @@
 const dgram = require('dgram');
-const serverPort = 8080;
+const BackupPort = 8081;
 const multicastAddress = '239.255.1.100'; // Endereço de multicast para comunicação
 const clients = [];
 
@@ -110,7 +110,7 @@ const server = dgram.createSocket({ type: 'udp4', reuseAddr: true });
 
 server.on('listening', () => {
   server.addMembership(multicastAddress);
-  console.log(`Servidor escutando na porta ${serverPort} e endereço multicast ${multicastAddress}`);
+  console.log(`Servidor escutando na porta ${BackupPort} e endereço multicast ${multicastAddress}`);
 });
 
 server.on('message', (message, remote) => {
@@ -137,4 +137,4 @@ server.on('error', (err) => {
   });
 });*/
 
-server.bind(serverPort);
+server.bind(BackupPort);
