@@ -41,6 +41,7 @@
               client.currentState = ClientState.AWAITING_MASS;
               server.send("Qual a massa do seu soco?", rinfo.port, rinfo.address);
               break;
+           
             default:
               server.send('Operação inválida!', rinfo.port, multicastAddress);
               break;
@@ -102,8 +103,14 @@
     const clientId = remote.address + ':' + remote.port;
   
     console.log(`Requisição recebida do cliente ${clientId}: ${data}`);
-
-      processRequest(data, remote); 
+    if (data === 'PING') {
+      server.send('PONG', remote.port, remote.address, (err) => {
+        if (err) {
+          console.log('Erro ao enviar resposta para o cliente:', err);
+        }
+      });
+    }else{processRequest(data, remote); }
+     
 
   });
 
