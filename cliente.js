@@ -1,22 +1,23 @@
 const dgram = require('dgram');
 const readline = require('readline');
 
-const multicastAddress = '239.255.1.100'; // Endereço de multicast para comunicação
+const multicastAddress = '239.255.1.100';
 const serverPort = 8080;
-const clientePort = 8070;
 const serverBackupPort = 8081;
 const tentativasMax = 4;
+const intervaloTimeout = 2000; // 5 segundos de timeout
+
 
 let tentativas = 0;
 let Conectado = false;
 let serverAtual = 'original';
+let reqServidor= 0;
 
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout
 });
 
-// Função para enviar mensagem de ping ao servidor
 function pingServer() {
   const MensagemPing = 'PING';
 
@@ -28,20 +29,26 @@ function pingServer() {
   });
 }
 
-// Verificação periódica do servidor a cada 5 segundos
-setInterval(() => {
+function checkServerStatus() {
+    Conectado = false;
   if (tentativas < tentativasMax) {
     if (!Conectado) {
       tentativas += 1;
       pingServer();
     }
   } else {
-    serverAtual = serverAtual === 'original' ? 'backup' : 'original';
-    tentativas = 0;
+    if(reqServidor <=8){
+      serverAtual = serverAtual === 'original' ? 'backup' : 'original';
+      tentativas = 0;
+      reqServidor = reqServidor+ 4;
+      console.log('trocou: req servidor: ' + serverAtual)
+    }else{
+      console.log('Deu ruim, tamo sem servidor');
+      process.exit(0)
+    }
   }
-}, 2000);
+}
 
-// Função para exibir as operações disponíveis
 function displayOperations() {
   console.log('Escolha uma operação:');
   console.log('1 - Área de uma casa');
@@ -50,11 +57,11 @@ function displayOperations() {
 }
 
 const client = dgram.createSocket({ type: 'udp4', reuseAddr: true });
-
+displayOperations();
 client.on('listening', () => {
   client.addMembership(multicastAddress);
   client.setMulticastTTL(128);
-  displayOperations();
+  setInterval(checkServerStatus, intervaloTimeout); // Adicionando o intervalo de verificação do status do servidor
 });
 
 client.on('message', (message) => {
@@ -63,6 +70,7 @@ client.on('message', (message) => {
   if (response === 'PONG') {
     Conectado = true;
     tentativas = 0;
+    reqServidor = 0;
   } else {
     console.log('Resposta do servidor:', response);
   }
@@ -73,11 +81,14 @@ client.on('error', (err) => {
   Conectado = false;
 });
 
-// Evento de leitura de entrada do usuário para enviar as operações ao servidor
 rl.on('line', function (operacao) {
-  client.send(operacao, serverAtual === 'original' ? serverPort : serverBackupPort, multicastAddress, (err) => {
-    if (err) {
-      console.log('Erro ao enviar mensagem multicast:', err);
-    }
-  });
+  if (operacao === 'sair') { // Verificando se o usuário digitou 'exit' para encerrar o programa
+    client.close(() => process.exit(0));
+  } else {
+    client.send(operacao, serverAtual === 'original' ? serverPort : serverBackupPort, multicastAddress, (err) => {
+      if (err) {
+        console.log('Erro ao enviar mensagem multicast:', err);
+      }
+    });
+  }
 });

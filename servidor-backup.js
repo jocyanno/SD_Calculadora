@@ -117,7 +117,7 @@ server.on('listening', () => {
 server.on('message', (message, remote) => {
   const data = message.toString().trim();
   const clientId = remote.address + ':' + remote.port;
-  console.log(`Requisição recebida do cliente ${clientId}: ${data}`);
+ // console.log(`Requisição recebida do cliente ${clientId}: ${data}`);
   processRequest(data, remote);
 });
 
@@ -125,17 +125,5 @@ server.on('error', (err) => {
   console.error('Erro no servidor:', err);
   server.send('Problemas', 8070, multicastAddress);
 });
-
-/*server.on('close', () => {
-  console.log('Servidor foi fechado.');
-  // Enviar mensagem de erro para todos os clientes conectados
-  clients.forEach((client) => {
-    server.send('Servidor foi fechado. Conexão perdida.', client.port, client.address, (err) => {
-      if (err) {
-        console.log('Erro ao enviar mensagem de erro:', err);
-      }
-    });
-  });
-});*/
 
 server.bind(BackupPort);
