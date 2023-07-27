@@ -100,7 +100,6 @@ const processRequest = (msg, rinfo) => {
           break;
 
         case ClientState.AWAITING_MASS:
-          // O cliente enviou a massa do soco, podemos calcular o poder do soco
           const massaSoco = parseFloat(msg);
           const poderSoco = massaSoco * Math.pow(299792458, 2);
           console.log(`Cliente ${clientId} enviou massa do soco: ${massaSoco}`);

@@ -60,6 +60,7 @@ function displayOperations() {
   console.log('3 - O poder do seu soco no espaço, na velocidade da luz');
   console.log("4 - Juros Simples");
   console.log("5 - Juros Composto");
+  console.log("6 - Sair")
 }
 
 const client = dgram.createSocket({ type: 'udp4', reuseAddr: true });
@@ -89,7 +90,7 @@ client.on('error', (err) => {
 });
 
 rl.on('line', function (operacao) {
-  if (operacao === 'sair') { // Verificando se o usuário digitou 'exit' para encerrar o programa
+  if (operacao === '6') { // Verificando se o usuário digitou 'exit' para encerrar o programa
     client.close(() => process.exit(0));
   } else {
     client.send(operacao, serverAtual === 'original' ? serverPort : serverBackupPort, multicastAddress, (err) => {
