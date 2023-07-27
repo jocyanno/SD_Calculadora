@@ -17,7 +17,8 @@ const getClientById = (clientId) => {
   return clients.find((client) => client.id === clientId);
 };
 
-// Função para processar as requisições recebidas
+// Função para processar as requisições recebidas+
+
 const processRequest = (msg, rinfo) => {
   const clientId = rinfo.address + ':' + rinfo.port;
   let client = getClientById(clientId);
