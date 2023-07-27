@@ -5,11 +5,17 @@ const clients = [];
 
 // Estados possíveis do cliente
 const ClientState = {
-  IDLE: 'IDLE', // O cliente não está realizando nenhum cálculo
-  AWAITING_LENGTH: 'AWAITING_LENGTH', // O cliente está aguardando o envio do comprimento da casa
-  AWAITING_WIDTH: 'AWAITING_WIDTH', // O cliente está aguardando o envio da largura da casa
-  AWAITING_RADIUS: 'AWAITING_RADIUS', // O cliente está aguardando o envio do raio do círculo
-  AWAITING_MASS: 'AWAITING_MASS', // O cliente está aguardando o envio da massa do soco
+  IDLE: 'IDLE', 
+  AWAITING_LENGTH: 'AWAITING_LENGTH', 
+  AWAITING_WIDTH: 'AWAITING_WIDTH', 
+  AWAITING_RADIUS: 'AWAITING_RADIUS', 
+  AWAITING_MASS: 'AWAITING_MASS', 
+  AWAITING_SIMPLE: 'AWAITING_SIMPLE',
+  AWAITING_SIMPLES_JUR: 'AWAITING_SIMPLES_JUR',
+  AWAITING_SIMPLES_TEMP: 'AWAITING_SIMPLES_TEMP',
+  AWAITING_COMPOUND: 'AWAITING_COMPOUND',
+  AWAITING_COMPOUND_JUR: 'AWAITING_COMPOUND_JUR',
+  AWAITING_COMPOUND_TEMP: 'AWAITING_COMPOUND_TEMP',
 };
 
 // Função para encontrar cliente pelo ID
@@ -55,7 +61,12 @@ const processRequest = (msg, rinfo) => {
               server.send("Qual a massa do seu soco?", rinfo.port, rinfo.address);
               break;
             case '4':
-              server.close();
+              client.currentState = ClientState.AWAITING_SIMPLE;
+              server.send("Qual o valor capital? ", rinfo.port, rinfo.address);
+              break;
+            case '5':
+              client.currentState = ClientState.AWAITING_COMPOUND;
+              server.send("Qual o valor capital? ", rinfo.port, rinfo.address);
               break;
             default:
               server.send('Operação inválida!', rinfo.port, multicastAddress);
@@ -94,6 +105,50 @@ const processRequest = (msg, rinfo) => {
           const poderSoco = massaSoco * Math.pow(299792458, 2);
           console.log(`Cliente ${clientId} enviou massa do soco: ${massaSoco}`);
           server.send(`Seu soco teria o poder de ${poderSoco} joules, poderia causar uma catástrofe!`, rinfo.port, rinfo.address);
+          client.currentState = ClientState.IDLE;
+          break;
+        
+        case ClientState.AWAITING_SIMPLE:
+          client.capital = parseFloat(msg);
+          console.log(`Cliente ${clientId} enviou capital do juros simples: ${client.capital}`);
+          client.currentState = ClientState.AWAITING_SIMPLES_JUR;
+          server.send("Qual a taxa de juros?", rinfo.port, rinfo.address);
+          break;
+        
+        case ClientState.AWAITING_SIMPLES_JUR:
+          client.juros = parseFloat(msg);
+          console.log(`Cliente ${clientId} enviou juros do juros simples: ${client.juros}`);
+          client.currentState = ClientState.AWAITING_SIMPLES_TEMP;
+          server.send("Qual o tempo em ano(s)?", rinfo.port, rinfo.address);
+          break;
+        
+        case ClientState.AWAITING_SIMPLES_TEMP:
+          const tempo = parseFloat(msg);
+          const jurosSimples = ((client.capital * client.juros * tempo) / 100);
+          console.log(`Cliente ${clientId} enviou tempo em anos do juros simples: ${tempo}`);
+          server.send(`O valor do juros simples é: ${jurosSimples}`, rinfo.port, rinfo.address);
+          client.currentState = ClientState.IDLE;
+          break;
+
+        case ClientState.AWAITING_COMPOUND:
+          client.capital_composto = parseFloat(msg)
+          console.log(`Cliente ${clientId} enviou capital do juros composto: ${client.capital_composto}`);
+          client.currentState = ClientState.AWAITING_COMPOUND_JUR;
+          server.send("Qual a taxa de juros?", rinfo.port, rinfo.address);
+          break;
+        
+        case ClientState.AWAITING_COMPOUND_JUR:
+          client.juros_composto = parseFloat(msg)
+          console.log(`Cliente ${clientId} enviou juros composto: ${client.juros_composto}`);
+          client.currentState = ClientState.AWAITING_COMPOUND_TEMP;
+          server.send("Qual o tempo em ano(s)?", rinfo.port, rinfo.address);
+          break;
+
+        case ClientState.AWAITING_COMPOUND_TEMP:
+          const tempo_composto = parseFloat(msg);
+          const jurosComposto = (client.capital_composto * (Math.pow(1 + client.juros_composto / 100, tempo_composto) - 1));
+          console.log(`Cliente ${clientId} enviou tempo em anos do juros composto: ${tempo_composto}`);
+          server.send(`O valor do juros composto é: ${jurosComposto}`, rinfo.port, rinfo.address);
           client.currentState = ClientState.IDLE;
           break;
 
